@@ -109,13 +109,7 @@ jobs:
             --set persistence.storageClass=nfs \
             --set persistence.docspaceData.size=1Gi \
             --set persistence.routerLog.size=256Mi \
-            --set opensearch.persistence.storageClass=nfs \
-            --set opensearch.persistence.size=1Gi \
-            --set opensearch.env.ESJAVAOPTS="-Xms512m -Xmx512m -Dlog4j2.formatMsgNoLookups=true" \
-            --set opensearch.resources.requests.memory=512Mi \
-            --set opensearch.resources.requests.cpu=100m \
-            --set opensearch.resources.limits.memory=1Gi \
-            --set opensearch.resources.limits.cpu=1000m \
+            --set opensearch.enabled=false \
             --wait \
             --timeout 20m
 
