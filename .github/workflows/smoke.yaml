@@ -105,11 +105,10 @@ jobs:
             --set replicas=1 \
             --set docs.enabled=false \
             --set connections.documentServerHost="" \
-            --set proxyFrontend.service.type=ClusterIP \
+            --set opensearch.enabled=false \
             --set persistence.storageClass=nfs \
             --set persistence.docspaceData.size=1Gi \
             --set persistence.routerLog.size=256Mi \
-            --set opensearch.enabled=false \
             --wait \
             --timeout 20m
 
