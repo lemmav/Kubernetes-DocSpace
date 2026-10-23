@@ -113,6 +113,38 @@ jobs:
             --wait \
             --timeout 20m
 
+      - name: Port-forward router
+        run: |
+          kubectl port-forward svc/router 8092:8092 >/tmp/port-forward.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null http://localhost:8092/ && exit 0
+            sleep 2
+          done
+          cat /tmp/port-forward.log
+          exit 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tests/smoke/requirements.txt
+
+      - name: Install test dependencies
+        run: pip install -r tests/smoke/requirements.txt
+
+      - name: Run smoke tests
+        env:
+          BASE_URL: http://localhost:8092
+        run: pytest tests/smoke --junitxml=smoke-report.xml
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: smoke-report.xml
+
       - name: Show DocSpace state
         if: always()
         run: |
