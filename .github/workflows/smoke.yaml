@@ -148,17 +148,22 @@ jobs:
       - name: Show DocSpace state
         if: always()
         run: |
-          echo "=== Pods ==="
+          echo "::group::Pods Status"
           kubectl get pods -o wide
+          echo "::endgroup::"
 
-          echo "=== PVC ==="
+          echo "::group::Persistent Volume Claims"
           kubectl get pvc
+          echo "::endgroup::"
 
-          echo "=== Services ==="
+          echo "::group::Services"
           kubectl get svc
+          echo "::endgroup::"
 
-          echo "=== Helm releases ==="
+          echo "::group::Helm Releases"
           helm list
+          echo "::endgroup::"
 
-          echo "=== Events ==="
+          echo "::group::Kubernetes Events (last 100)"
           kubectl get events --sort-by=.lastTimestamp | tail -100
+          echo "::endgroup::"
