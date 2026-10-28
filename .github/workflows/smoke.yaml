@@ -105,8 +105,11 @@ jobs:
         run: |
           helm install docspace . \
             --set replicas=1 \
-            --set docs.enabled=false \
-            --set connections.documentServerHost="" \
+            --set docs.converter.replicas=1 \
+            --set docs.docservice.replicas=1 \
+            --set docs.persistence.size=1Gi \
+            --set docs.persistence.buffer.size=1Gi \
+            --set docs.persistence.runtimeConfig.size=256Mi \
             --set opensearch.enabled=false \
             --set persistence.storageClass=nfs \
             --set persistence.docspaceData.size=1Gi \
