@@ -38,7 +38,9 @@ class Portal:
 
     def request(self, method, path, **kwargs):
         kwargs.setdefault("timeout", REQUEST_TIMEOUT)
-        return self._session.request(method, self.base_url + path, **kwargs)
+        # The API returns absolute links (e.g. viewUrl); pass them through as they are.
+        url = path if path.startswith(("http://", "https://")) else self.base_url + path
+        return self._session.request(method, url, **kwargs)
 
     def get(self, path, **kwargs):
         return self.request("GET", path, **kwargs)
@@ -79,27 +81,36 @@ def body_of(response):
     return data["response"]
 
 
-@pytest.fixture(scope="session")
+def base_url():
+    return os.environ.get("BASE_URL", "http://localhost:8092")
+
+
+@pytest.fixture
 def portal():
-    """Anonymous client for the portal behind the router."""
-    return Portal(os.environ.get("BASE_URL", "http://localhost:8092"))
+    """Anonymous client for the portal behind the router.
+
+    Created per test: the wizard and login set auth cookies, which must not
+    leak into tests that check anonymous access.
+    """
+    return Portal(base_url())
 
 
 @pytest.fixture(scope="session")
-def settings(portal):
+def settings():
     """Anonymous portal settings as they were before any test touched the portal."""
-    response = portal.get("/api/2.0/settings")
+    response = Portal(base_url()).get("/api/2.0/settings")
     assert response.status_code == 200, response.text[:300]
     return body_of(response)
 
 
 @pytest.fixture(scope="session")
-def wizard_completed(portal, settings):
+def wizard_completed(settings):
     """Run the first-run wizard once so the portal owner exists.
 
     The wizard token is present in the settings only while the wizard is pending,
     so an already initialized portal is left as it is.
     """
+    portal = Portal(base_url())
     token = settings.get("wizardToken")
     if not token:
         return False
@@ -130,8 +141,9 @@ def wizard_completed(portal, settings):
 
 
 @pytest.fixture(scope="session")
-def admin(portal, settings, wizard_completed):
+def admin(settings, wizard_completed):
     """Client authorized as the portal owner."""
+    portal = Portal(base_url())
     response = portal.post(
         "/api/2.0/authentication",
         json={"userName": PORTAL_EMAIL, "passwordHash": password_hash(settings)},
