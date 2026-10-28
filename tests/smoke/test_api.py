@@ -7,20 +7,23 @@ pytestmark = pytest.mark.portal
 def test_capabilities_endpoint_returns_json_object(portal):
     response = portal.get("/api/2.0/capabilities.json")
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text[:300]
     assert isinstance(response.json(), dict)
 
 
 def test_build_version_is_reported(portal):
-    # Needs api + database, so it also proves the backend is wired up.
+    # Anonymous endpoint backed by the database, so it proves api + MySQL work.
     response = portal.get("/api/2.0/settings/version/build")
 
-    assert response.status_code == 200
-    assert response.json().get("response"), "version info should not be empty"
+    assert response.status_code == 200, response.text[:300]
+    assert response.json().get("response"), f"version info is empty: {response.text[:300]}"
 
 
-def test_common_portal_settings_are_available(portal):
+def test_portal_identifies_itself_as_docspace(portal):
+    # `docSpace` and `version` are part of the anonymous settings response.
     response = portal.get("/api/2.0/settings")
 
-    assert response.status_code == 200
-    assert response.json().get("response"), "settings should not be empty"
+    assert response.status_code == 200, response.text[:300]
+    settings = response.json()["response"]
+    assert settings.get("docSpace"), f"portal does not identify as DocSpace: {settings}"
+    assert settings.get("version"), f"portal version is missing: {settings}"
