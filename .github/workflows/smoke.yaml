@@ -35,6 +35,7 @@ jobs:
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
           helm repo add nfs-server-provisioner https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner
+          helm repo add onlyoffice https://download.onlyoffice.com/charts/stable
           helm repo update
 
       - name: Install NFS provisioner
@@ -49,7 +50,7 @@ jobs:
       - name: Install MySQL
         run: |
           helm install mysql \
-            -f https://raw.githubusercontent.com/ONLYOFFICE/Kubernetes-DocSpace/main/sources/mysql_values.yaml \
+            -f sources/mysql_values.yaml \
             --version 14.0.3 \
             bitnami/mysql \
             --set auth.database=docspace \
@@ -133,6 +134,17 @@ jobs:
       - name: Install test dependencies
         run: pip install -r tests/smoke/requirements.txt
 
+      - name: Prepare license
+        env:
+          DOCSPACE_LICENSE_B64: ${{ secrets.DOCSPACE_LICENSE_B64 }}
+        run: |
+          if [ -n "$DOCSPACE_LICENSE_B64" ]; then
+            echo "$DOCSPACE_LICENSE_B64" | base64 -d > "$RUNNER_TEMP/license.lic"
+            echo "LICENSE_FILE=$RUNNER_TEMP/license.lic" >> "$GITHUB_ENV"
+          else
+            echo "::warning::DOCSPACE_LICENSE_B64 secret is not set, the wizard will fail if a license is required"
+          fi
+
       - name: Run smoke tests
         env:
           BASE_URL: http://localhost:8092
@@ -166,4 +178,12 @@ jobs:
 
           echo "::group::Kubernetes Events (last 100)"
           kubectl get events --sort-by=.lastTimestamp | tail -100
+          echo "::endgroup::"
+
+          echo "::group::Logs of Not Ready Pods"
+          for pod in $(kubectl get pods --no-headers | awk '$2 !~ /^([0-9]+)\/\1$/ && $3 != "Completed" {print $1}'); do
+            echo "--- $pod ---"
+            kubectl describe pod "$pod" | tail -30
+            kubectl logs "$pod" --all-containers --tail=100 || true
+          done
           echo "::endgroup::"
