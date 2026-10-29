@@ -5,6 +5,7 @@ from support.config import REQUEST_TIMEOUT
 from support.constants import HTTP_OK, Field
 
 ERROR_PREVIEW = 300  # characters of a reply shown in an assertion message
+ERROR_STACK_LINES = 6  # lines of the portal error stack shown in an assertion message
 
 
 class Portal:
@@ -52,7 +53,20 @@ def body_of(response):
     return data[Field.RESPONSE]
 
 
+def describe_failure(response):
+    """Status and error of a failed call; for a portal error also the top of its stack, one line each."""
+    status = f"HTTP {response.status_code}"
+    try:
+        error = response.json()["error"]
+    except (ValueError, KeyError, TypeError):
+        return f"{status} {preview(response)}"
+    if not isinstance(error, dict):
+        return f"{status} {preview(response)}"
+    stack = [line.strip() for line in (error.get("stack") or "").splitlines() if line.strip()]
+    return "\n".join([f"{status} {error.get('message')}", *stack[:ERROR_STACK_LINES]])
+
+
 def expect_ok(response, action):
     """Assert the call succeeded and return its payload."""
-    assert response.status_code == HTTP_OK, f"{action} failed: HTTP {response.status_code} {preview(response)}"
+    assert response.status_code == HTTP_OK, f"{action} failed: {describe_failure(response)}"
     return body_of(response)

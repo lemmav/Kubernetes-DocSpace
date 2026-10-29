@@ -18,9 +18,10 @@ import tempfile
 import xml.etree.ElementTree as ET
 
 MAX_LINES = 50
-DIAGNOSTICS_LINES = 12
+DIAGNOSTICS_LINES = 24
 MAX_LINE_WIDTH = 200
 TRACEBACK_LINES = 20
+DETAIL_LINES = 6
 ARTIFACT_NAME = "smoke-report"
 REPORT_FILE = "smoke-report.xml"
 DIAGNOSTICS_FILE = "smoke-diagnostics.txt"
@@ -61,6 +62,7 @@ def read_results(xml_path):
         failed.append({
             "name": f"{case.get('classname', '')}::{case.get('name', '')}".lstrip(":"),
             "assertion": assertions[0] if assertions else " ".join((problem.get("message") or "").splitlines()[:1]),
+            "details": assertions[1:],
             "traceback": [line for line in text if line.strip()],
         })
     counters["passed"] = counters["tests"] - counters["failures"] - counters["errors"] - counters["skipped"]
@@ -130,8 +132,10 @@ def build_report(xml_path, diagnostics_path, run_id):
         lines.append(f"  {clip(first['assertion'])}")
         if len(items) > 1:
             lines.append(clip("  also: " + ", ".join(item["name"].split("::")[-1] for item in items[1:])))
+        details = [clip(line) for line in first["details"][:DETAIL_LINES]]
+        lines.extend(f"    {line}" for line in details)
         trace = [clip(line) for line in project_frames(first["traceback"])]
-        lines.extend(f"  | {line}" for line in trace[: min(TRACEBACK_LINES, max(0, per_group - 3))])
+        lines.extend(f"  | {line}" for line in trace[: min(TRACEBACK_LINES, max(0, per_group - 3 - len(details)))])
     if len(groups) > len(shown):
         hidden = sum(len(items) for items in list(groups.values())[len(shown):])
         lines.append(f"... and {hidden} more failed tests with other errors")
