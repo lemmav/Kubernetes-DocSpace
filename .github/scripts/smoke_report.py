@@ -145,12 +145,48 @@ def build_report(xml_path, diagnostics_path, run_id):
     return lines[:MAX_LINES]
 
 
+def read_cases(xml_path):
+    """Every testcase as (name, status, seconds); failed ones first, the rest in run order."""
+    root = ET.parse(xml_path).getroot()
+    suite = root if root.tag == "testsuite" else root.find("testsuite")
+    cases = []
+    for case in suite.iter("testcase"):
+        if case.find("failure") is not None or case.find("error") is not None:
+            status = "FAILED"
+        elif case.find("skipped") is not None:
+            status = "skipped"
+        else:
+            status = "passed"
+        name = f"{case.get('classname', '')}::{case.get('name', '')}".lstrip(":")
+        cases.append((name, status, float(case.get("time", 0))))
+    return sorted(cases, key=lambda item: item[1] != "FAILED")
+
+
+def cases_table(cases):
+    """Collapsible markdown table of all tests for the run page."""
+    pipe = "\\|"  # a pipe inside a cell would split the table row
+    rows = [f"| {name.replace('|', pipe)} | {status} | {seconds:.1f}s |" for name, status, seconds in cases]
+    return "\n".join([
+        f"<details><summary>All tests ({len(cases)})</summary>",
+        "",
+        "| Test | Result | Time |",
+        "| --- | --- | --- |",
+        *rows,
+        "",
+        "</details>",
+    ])
+
+
 def command_summary(args):
     lines = build_report(args.xml, args.diagnostics, args.run_id)
     print("\n".join(lines))
     if args.github_summary:
+        # A fence inside an error text would close the code block early.
+        page = "```\n" + "\n".join(lines).replace("```", "'''") + "\n```\n"
+        if os.path.isfile(args.xml):
+            page += "\n" + cases_table(read_cases(args.xml)) + "\n"
         with open(args.github_summary, "a", encoding="utf-8") as handle:
-            handle.write("```\n" + "\n".join(lines) + "\n```\n")
+            handle.write(page)
     return 0 if lines[0].startswith("[OK]") else 1
 
 
