@@ -1,0 +1,24 @@
+"""Run configuration read from the environment.
+
+Environment:
+    BASE_URL          portal address reachable from the runner (default http://localhost:8092)
+    NAMESPACE         Kubernetes namespace DocSpace is installed in (default "default")
+    PORTAL_EMAIL      owner email created by the first-run wizard (default smoke@smoke.com)
+    PORTAL_PASSWORD   owner password (default Smoke-Test-2026)
+    LICENSE_FILE      path to license.lic (the wizard of DocSpace Enterprise requires a license)
+    LICENSE           license content, used when LICENSE_FILE is not set
+"""
+import os
+
+BASE_URL = os.environ.get("BASE_URL", "http://localhost:8092")
+NAMESPACE = os.environ.get("NAMESPACE", "default")
+
+PORTAL_EMAIL = os.environ.get("PORTAL_EMAIL", "smoke@smoke.com")
+PORTAL_PASSWORD = os.environ.get("PORTAL_PASSWORD", "Smoke-Test-2026")
+WRONG_PASSWORD = "wrong-password"
+
+LICENSE_FILE = os.environ.get("LICENSE_FILE")
+LICENSE_CONTENT = os.environ.get("LICENSE")
+
+REQUEST_TIMEOUT = 30  # seconds, any API call
+CONVERSION_TIMEOUT = 180  # seconds, Document Server converts the file synchronously
