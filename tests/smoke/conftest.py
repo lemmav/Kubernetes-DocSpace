@@ -7,6 +7,14 @@ from support.client import Portal, expect_ok
 from support.config import BASE_URL, NAMESPACE
 
 
+def pytest_collection_modifyitems(items):
+    """Put the first docstring line of every test into the JUnit XML, the run summary shows it as the test name."""
+    for item in items:
+        lines = (item.function.__doc__ or "").strip().splitlines()
+        if lines:
+            item.user_properties.append(("description", lines[0].strip()))
+
+
 @pytest.fixture
 def portal():
     """Anonymous client for the portal behind the router.

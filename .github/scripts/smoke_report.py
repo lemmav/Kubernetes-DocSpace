@@ -145,8 +145,22 @@ def build_report(xml_path, diagnostics_path, run_id):
     return lines[:MAX_LINES]
 
 
+def humanize(text):
+    """test_owner_can_log_in -> Owner can log in."""
+    text = text.removeprefix("test_").replace("_", " ").strip()
+    return text[:1].upper() + text[1:]
+
+
+def case_title(case):
+    """Docstring of the test (recorded by conftest), else its humanized function name."""
+    for prop in case.iter("property"):
+        if prop.get("name") == "description" and prop.get("value"):
+            return prop.get("value").rstrip(".")
+    return humanize(case.get("name", "").split("[")[0])
+
+
 def read_cases(xml_path):
-    """Every testcase as (name, status, seconds); failed ones first, the rest in run order."""
+    """Every testcase as (area, title, status, seconds); failed ones first, the rest in run order."""
     root = ET.parse(xml_path).getroot()
     suite = root if root.tag == "testsuite" else root.find("testsuite")
     cases = []
@@ -157,20 +171,28 @@ def read_cases(xml_path):
             status = "skipped"
         else:
             status = "passed"
-        name = f"{case.get('classname', '')}::{case.get('name', '')}".lstrip(":")
-        cases.append((name, status, float(case.get("time", 0))))
-    return sorted(cases, key=lambda item: item[1] != "FAILED")
+        area = humanize(case.get("classname", "").split(".")[-1])
+        title = case_title(case)
+        name = case.get("name", "")
+        param = name[name.find("["):] if "[" in name else ""
+        cases.append([area, title, param, status, float(case.get("time", 0))])
+    # A parametrized test shares its title between cases, so keep the parameter there to tell them apart.
+    titles = [item[1] for item in cases]
+    result = [(area, title + (f" {param}" if titles.count(title) > 1 else ""), status, seconds)
+              for area, title, param, status, seconds in cases]
+    return sorted(result, key=lambda item: item[2] != "FAILED")
 
 
 def cases_table(cases):
     """Collapsible markdown table of all tests for the run page."""
     pipe = "\\|"  # a pipe inside a cell would split the table row
-    rows = [f"| {name.replace('|', pipe)} | {status} | {seconds:.1f}s |" for name, status, seconds in cases]
+    rows = [f"| {area} | {title.replace('|', pipe)} | {status} | {seconds:.1f}s |"
+            for area, title, status, seconds in cases]
     return "\n".join([
         f"<details><summary>All tests ({len(cases)})</summary>",
         "",
-        "| Test | Result | Time |",
-        "| --- | --- | --- |",
+        "| Area | Test | Result | Time |",
+        "| --- | --- | --- | --- |",
         *rows,
         "",
         "</details>",
