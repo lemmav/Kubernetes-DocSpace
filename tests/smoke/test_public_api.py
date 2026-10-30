@@ -3,6 +3,7 @@ import pytest
 
 from support import endpoints
 from support.client import body_of, preview
+from support.config import EXPECTED_VERSION
 from support.constants import HTTP_OK, Field
 
 pytestmark = pytest.mark.portal
@@ -32,3 +33,12 @@ def test_portal_identifies_itself_as_docspace(portal):
     settings = body_of(response)
     assert settings.get(Field.DOC_SPACE), f"portal does not identify as DocSpace: {settings}"
     assert settings.get(Field.VERSION), f"portal version is missing: {settings}"
+
+
+@pytest.mark.skipif(not EXPECTED_VERSION, reason="EXPECTED_VERSION is not set")
+def test_portal_version_matches_the_chart(portal):
+    """The installed portal reports the version the chart is meant to install."""
+    version = body_of(portal.get(endpoints.SETTINGS)).get(Field.VERSION) or ""
+
+    assert version == EXPECTED_VERSION or version.startswith(EXPECTED_VERSION + "."), \
+        f"expected version {EXPECTED_VERSION}, got {version}"

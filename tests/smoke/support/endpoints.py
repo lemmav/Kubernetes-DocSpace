@@ -19,6 +19,23 @@ MY_UPLOAD = "/api/2.0/files/@my/upload"
 ROOMS = "/api/2.0/files/rooms"
 
 
+OAUTH_SIGNATURE = "/api/2.0/security/oauth2/token"
+OAUTH_SCOPES = "/api/2.0/oauth2/scopes"
+OAUTH_CLIENTS = "/api/2.0/oauth2/clients"
+
+
+def oauth_client(client_id):
+    return f"/api/2.0/oauth2/clients/{client_id}"
+
+
+def oauth_client_public_info(client_id):
+    return f"/api/2.0/oauth2/clients/{client_id}/public/info"
+
+
+def file_link(file_id):
+    return f"/api/2.0/files/file/{file_id}/link"
+
+
 def folder(parent_id):
     return f"/api/2.0/files/folder/{parent_id}"
 

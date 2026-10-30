@@ -5,6 +5,7 @@ Environment:
     NAMESPACE         Kubernetes namespace DocSpace is installed in (default "default")
     PORTAL_EMAIL      owner email created by the first-run wizard (default smoke@smoke.com)
     PORTAL_PASSWORD   owner password (default Smoke-Test-2026)
+    EXPECTED_VERSION  portal version the install must report, e.g. 3.7.2 (the version test is skipped without it)
     LICENSE_FILE      path to license.lic (the wizard of DocSpace Enterprise requires a license)
     LICENSE           license content, used when LICENSE_FILE is not set
 """
@@ -16,6 +17,8 @@ NAMESPACE = os.environ.get("NAMESPACE", "default")
 PORTAL_EMAIL = os.environ.get("PORTAL_EMAIL", "smoke@smoke.com")
 PORTAL_PASSWORD = os.environ.get("PORTAL_PASSWORD", "Smoke-Test-2026")
 WRONG_PASSWORD = "wrong-password"
+
+EXPECTED_VERSION = os.environ.get("EXPECTED_VERSION")  # the version test is skipped when not set
 
 LICENSE_FILE = os.environ.get("LICENSE_FILE")
 LICENSE_CONTENT = os.environ.get("LICENSE")

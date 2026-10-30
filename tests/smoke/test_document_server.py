@@ -1,8 +1,8 @@
 """Document Server: it builds and converts documents for DocSpace."""
 import pytest
 
-from support.constants import Field, Signature, Title
-from support.files import convert, create_document, download_file
+from support.constants import RTF_CONTENT, Field, Signature, Title
+from support.files import convert, create_document, download_file, upload_file
 
 pytestmark = [pytest.mark.portal, pytest.mark.docs]
 
@@ -26,3 +26,13 @@ def test_document_server_converts_files(admin, source, target, signature):
 
     content = download_file(admin, converted[Field.ID])
     assert content.startswith(signature), f"unexpected file signature: {content[:8]!r}"
+
+
+def test_rtf_file_converts_to_docx(admin):
+    """A legacy RTF file is converted to DOCX."""
+    source_file = upload_file(admin, Title.RTF_SOURCE, RTF_CONTENT)
+
+    converted = convert(admin, source_file[Field.ID], Title.RTF_TARGET)
+
+    content = download_file(admin, converted[Field.ID])
+    assert content.startswith(Signature.ZIP), f"unexpected file signature: {content[:8]!r}"

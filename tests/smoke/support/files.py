@@ -1,8 +1,9 @@
 """File, folder and room scenarios on behalf of an authorized client."""
 import uuid
+from urllib.parse import parse_qs, urlparse
 
 from support import endpoints
-from support.client import expect_ok
+from support.client import expect_ok, find_key
 from support.config import CONVERSION_TIMEOUT
 from support.constants import HTTP_OK, Field
 
@@ -62,6 +63,17 @@ def download_version(client, version):
     url = version[Field.VIEW_URL]
     separator = "&" if "?" in url else "?"
     return download(client, f"{url}{separator}{Field.VERSION}={version[Field.VERSION]}")
+
+
+def create_share_key(client, file_id, access):
+    """Create the primary external link of a file and return its key (it goes into Request-Token)."""
+    shared = expect_ok(client.post(endpoints.file_link(file_id), json={"access": access}), "create external link")
+    key = find_key(shared, Field.REQUEST_TOKEN)
+    if not key:
+        link = find_key(shared, Field.SHARE_LINK) or ""
+        key = (parse_qs(urlparse(link).query).get("share") or [None])[0]
+    assert key, f"no key in the external link reply: {shared}"
+    return key
 
 
 def convert(client, file_id, target_title):

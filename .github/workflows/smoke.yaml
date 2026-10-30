@@ -151,7 +151,11 @@ jobs:
       - name: Run smoke tests
         env:
           BASE_URL: http://localhost:8092
-        run: pytest tests/smoke --junitxml=smoke-report.xml
+        run: |
+          EXPECTED_VERSION=$(grep '^appVersion:' Chart.yaml | tr -d '"' | awk '{print $2}')
+          export EXPECTED_VERSION
+          echo "Expected portal version: $EXPECTED_VERSION"
+          pytest tests/smoke --junitxml=smoke-report.xml
 
       - name: Collect compact cluster diagnostics
         if: failure()

@@ -37,6 +37,9 @@ class Portal:
     def put(self, path, **kwargs):
         return self.request("PUT", path, **kwargs)
 
+    def delete(self, path, **kwargs):
+        return self.request("DELETE", path, **kwargs)
+
     def with_token(self, token):
         return Portal(self.base_url, token)
 
@@ -51,6 +54,29 @@ def body_of(response):
     data = response.json()
     assert Field.RESPONSE in data, f"unexpected API reply: {preview(response)}"
     return data[Field.RESPONSE]
+
+
+def payload(response):
+    """Portal endpoints wrap results into `response`; the identity service answers bare."""
+    data = response.json()
+    return data[Field.RESPONSE] if isinstance(data, dict) and Field.RESPONSE in data else data
+
+
+def find_key(node, key):
+    """Depth-first search for a non-empty key in nested JSON; None when absent."""
+    if isinstance(node, dict):
+        if node.get(key):
+            return node[key]
+        children = node.values()
+    elif isinstance(node, list):
+        children = node
+    else:
+        return None
+    for child in children:
+        found = find_key(child, key)
+        if found:
+            return found
+    return None
 
 
 def describe_failure(response):
