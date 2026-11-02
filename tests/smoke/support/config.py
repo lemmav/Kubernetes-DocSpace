@@ -25,4 +25,6 @@ LICENSE_CONTENT = os.environ.get("LICENSE")
 
 REQUEST_TIMEOUT = 30  # seconds, any API call
 CONVERSION_TIMEOUT = 180  # seconds, Document Server converts the file synchronously
+PORTAL_READY_TIMEOUT = 300  # seconds, how long a slow-starting portal is waited for before the tests
+PORTAL_READY_INTERVAL = 5  # seconds between polls of a portal that is not ready yet
 WIZARD_TIMEOUT = 120  # seconds, the wizard validates the license through Document Server, which retries when it is down

@@ -4,7 +4,8 @@ import pytest
 from support import cluster, endpoints
 from support.auth import complete_wizard, owner_token
 from support.client import Portal, expect_ok
-from support.config import BASE_URL, NAMESPACE
+from support.config import BASE_URL, NAMESPACE, PORTAL_READY_INTERVAL, PORTAL_READY_TIMEOUT
+from support.readiness import wait_until_ready
 
 
 def pytest_collection_modifyitems(items):
@@ -15,8 +16,14 @@ def pytest_collection_modifyitems(items):
             item.user_properties.append(("description", lines[0].strip()))
 
 
+@pytest.fixture(scope="session")
+def portal_ready():
+    """Wait until the portal answers, so a slow start does not fail every test that needs it."""
+    wait_until_ready(Portal(BASE_URL), PORTAL_READY_TIMEOUT, PORTAL_READY_INTERVAL)
+
+
 @pytest.fixture
-def portal():
+def portal(portal_ready):
     """Anonymous client for the portal behind the router.
 
     Created per test: the wizard and login set auth cookies, which must not
@@ -26,7 +33,7 @@ def portal():
 
 
 @pytest.fixture(scope="session")
-def settings():
+def settings(portal_ready):
     """Anonymous portal settings as they were before any test touched the portal."""
     return expect_ok(Portal(BASE_URL).get(endpoints.SETTINGS), "read settings")
 
