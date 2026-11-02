@@ -59,6 +59,8 @@ class Title:
     UPLOAD = "smoke-upload.txt"
     VERSIONED = "smoke-versions.txt"
     PUBLIC_LINK_FILE = "smoke-link.txt"
+    PERSISTENT_ROOM = "smoke persistent room"
+    PERSISTENT_FILE = "smoke-persistent.txt"
     CONVERSION_SOURCE = "smoke-convert.docx"
     CONVERSION_TARGET = "smoke-converted.pdf"
     RTF_SOURCE = "smoke-convert.rtf"

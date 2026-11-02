@@ -40,6 +40,10 @@ def folder(parent_id):
     return f"/api/2.0/files/folder/{parent_id}"
 
 
+def folder_contents(folder_id):
+    return f"/api/2.0/files/{folder_id}"
+
+
 def file_info(file_id):
     return f"/api/2.0/files/file/{file_id}"
 

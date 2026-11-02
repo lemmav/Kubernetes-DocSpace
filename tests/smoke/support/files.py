@@ -17,6 +17,11 @@ def my_folder_id(client):
     return expect_ok(client.get(endpoints.MY_FOLDER), "open My Documents")[Field.CURRENT][Field.ID]
 
 
+def folder_title(client, folder_id):
+    """Title of a folder or a room."""
+    return expect_ok(client.get(endpoints.folder_contents(folder_id)), "open folder")[Field.CURRENT][Field.TITLE]
+
+
 def create_document(client, title):
     """Empty document built by Document Server from a template."""
     return expect_ok(client.post(endpoints.MY_FILE, json={Field.TITLE: title}), "create document")
