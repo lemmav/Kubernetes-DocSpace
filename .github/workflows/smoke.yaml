@@ -7,7 +7,36 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v3.18.4
+
+      - name: Build chart dependencies
+        run: |
+          helm repo add onlyoffice https://download.onlyoffice.com/charts/stable
+          helm dependency build .
+
+      # The chart reads the other passwords from the secrets of MySQL, Redis and RabbitMQ in the cluster,
+      # so offline rendering needs only the broker password.
+      - name: Helm lint
+        run: helm lint . --strict --set connections.brokerPassword=ci
+
+      - name: Helm template
+        run: |
+          helm template docspace . --set connections.brokerPassword=ci > /dev/null
+          helm template docspace . --set connections.brokerPassword=ci --set docs.enabled=false > /dev/null
+
   install:
+    needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
