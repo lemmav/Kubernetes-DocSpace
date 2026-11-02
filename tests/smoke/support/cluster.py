@@ -3,13 +3,14 @@ import json
 import subprocess
 
 SUCCEEDED = "Succeeded"
+KUBECTL_TIMEOUT = 60  # seconds, an unreachable API server must not hang the run
 
 
 def fetch_pods(namespace):
     """All pods of the namespace as parsed `kubectl get pods -o json` items."""
     result = subprocess.run(
         ["kubectl", "get", "pods", "-n", namespace, "-o", "json"],
-        capture_output=True, text=True, check=True,
+        capture_output=True, text=True, check=True, timeout=KUBECTL_TIMEOUT,
     )
     return json.loads(result.stdout)["items"]
 
