@@ -48,6 +48,10 @@ def file_info(file_id):
     return f"/api/2.0/files/file/{file_id}"
 
 
+def file_open_edit(file_id):
+    return f"/api/2.0/files/file/{file_id}/openedit"
+
+
 def file_copy_as(file_id):
     return f"/api/2.0/files/file/{file_id}/copyas"
 

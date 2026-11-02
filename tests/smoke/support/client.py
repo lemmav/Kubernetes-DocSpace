@@ -1,4 +1,6 @@
 """HTTP client for the portal API."""
+from urllib.parse import urlparse
+
 import requests
 
 from support.config import REQUEST_TIMEOUT
@@ -42,6 +44,12 @@ class Portal:
 
     def with_token(self, token):
         return Portal(self.base_url, token)
+
+
+def relative_url(url):
+    """Path and query of an absolute link, to request it through the portal address of the run."""
+    parts = urlparse(url)
+    return f"{parts.path}?{parts.query}" if parts.query else parts.path
 
 
 def preview(response):

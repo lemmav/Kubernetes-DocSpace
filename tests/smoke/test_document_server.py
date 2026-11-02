@@ -1,8 +1,9 @@
 """Document Server: it builds and converts documents for DocSpace."""
 import pytest
 
-from support.constants import RTF_CONTENT, Field, Signature, Title
-from support.files import convert, create_document, download_file, upload_file
+from support.client import relative_url
+from support.constants import EDITOR_API_MARKER, HTTP_OK, RTF_CONTENT, DocumentType, Field, Signature, Title
+from support.files import convert, create_document, download_file, open_editor_config, upload_file
 
 pytestmark = [pytest.mark.portal, pytest.mark.docs]
 
@@ -36,3 +37,15 @@ def test_rtf_file_converts_to_docx(admin):
 
     content = download_file(admin, converted[Field.ID])
     assert content.startswith(Signature.ZIP), f"unexpected file signature: {content[:8]!r}"
+
+
+def test_editor_config_leads_to_a_reachable_editor_script(admin, portal):
+    """The editor config names a Document Server script that browsers reach through the router."""
+    document = create_document(admin, Title.EDITOR_DOCUMENT)
+
+    config = open_editor_config(admin, document[Field.ID])
+
+    assert config[Field.DOCUMENT_TYPE] == DocumentType.WORD
+    script = portal.get(relative_url(config[Field.EDITOR_URL]))
+    assert script.status_code == HTTP_OK, f"editor script {config[Field.EDITOR_URL]} failed: HTTP {script.status_code}"
+    assert EDITOR_API_MARKER in script.text, "the editor script is not the Document Server API"

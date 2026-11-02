@@ -23,6 +23,14 @@ class RoomType:
     CUSTOM = 5
 
 
+class DocumentType:
+    """Editor type the portal reports for a file."""
+    WORD = "word"
+
+
+EDITOR_API_MARKER = "DocsAPI"  # the global the editor script defines
+
+
 class Access:
     READ = 2  # access level of an external link
 
@@ -48,6 +56,8 @@ class Field:
     CURRENT = "current"
     REQUEST_TOKEN = "requestToken"
     SHARE_LINK = "shareLink"
+    EDITOR_URL = "editorUrl"
+    DOCUMENT_TYPE = "documentType"
     CLIENT_ID = "client_id"
     NAME = "name"
 
@@ -59,6 +69,7 @@ class Title:
     UPLOAD = "smoke-upload.txt"
     VERSIONED = "smoke-versions.txt"
     PUBLIC_LINK_FILE = "smoke-link.txt"
+    EDITOR_DOCUMENT = "smoke-editor.docx"
     PERSISTENT_ROOM = "smoke persistent room"
     PERSISTENT_FILE = "smoke-persistent.txt"
     CONVERSION_SOURCE = "smoke-convert.docx"

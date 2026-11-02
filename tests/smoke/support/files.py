@@ -70,6 +70,11 @@ def download_version(client, version):
     return download(client, f"{url}{separator}{Field.VERSION}={version[Field.VERSION]}")
 
 
+def open_editor_config(client, file_id):
+    """What the portal hands to a browser to open the file in the editor."""
+    return expect_ok(client.get(endpoints.file_open_edit(file_id)), "get editor config")
+
+
 def create_share_key(client, file_id, access):
     """Create the primary external link of a file and return its key (it goes into Request-Token)."""
     shared = expect_ok(client.post(endpoints.file_link(file_id), json={"access": access}), "create external link")
