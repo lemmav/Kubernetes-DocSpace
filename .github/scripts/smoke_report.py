@@ -91,10 +91,13 @@ def format_duration(seconds):
 
 def headline(counters, run_id):
     bad = counters["failures"] + counters["errors"]
-    icon = "OK" if bad == 0 else "FAIL"
+    # A run in which no test passed verified nothing (nothing collected, or everything skipped).
+    icon = "OK" if bad == 0 and counters["passed"] > 0 else "FAIL"
     parts = [f"{counters['passed']} passed", f"{bad} failed"]
     if counters["skipped"]:
         parts.append(f"{counters['skipped']} skipped")
+    if icon == "FAIL" and bad == 0:
+        parts.append("nothing was verified")
     run = f" (run {run_id})" if run_id else ""
     return f"[{icon}] smoke: {', '.join(parts)} in {format_duration(counters['time'])}{run}"
 
