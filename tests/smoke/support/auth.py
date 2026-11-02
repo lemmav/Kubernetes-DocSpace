@@ -4,7 +4,7 @@ import os
 
 from support import endpoints
 from support.client import body_of, expect_ok, preview
-from support.config import LICENSE_CONTENT, LICENSE_FILE, PORTAL_EMAIL, PORTAL_PASSWORD
+from support.config import LICENSE_CONTENT, LICENSE_FILE, PORTAL_EMAIL, PORTAL_PASSWORD, WIZARD_TIMEOUT
 from support.constants import HTTP_OK, LICENSE_FILE_NAME, WIZARD_LANGUAGE, WIZARD_TIME_ZONE, Field
 
 
@@ -33,7 +33,10 @@ def upload_license_if_required(portal, confirm):
     license_bytes = read_license()
     assert license_bytes, "a license is required: set LICENSE_FILE (path) or LICENSE (content)"
     expect_ok(
-        portal.post(endpoints.LICENSE_UPLOAD, headers=confirm, files={"Files": (LICENSE_FILE_NAME, license_bytes)}),
+        portal.post(
+            endpoints.LICENSE_UPLOAD, headers=confirm, files={"Files": (LICENSE_FILE_NAME, license_bytes)},
+            timeout=WIZARD_TIMEOUT,
+        ),
         "license upload",
     )
 
@@ -58,6 +61,7 @@ def complete_wizard(portal, settings):
             "lng": WIZARD_LANGUAGE,
             "timeZone": WIZARD_TIME_ZONE,
         },
+        timeout=WIZARD_TIMEOUT,
     )
     assert response.status_code == HTTP_OK, f"wizard failed: {preview(response)}"
     assert body_of(response).get(Field.COMPLETED), f"wizard not completed: {preview(response)}"
