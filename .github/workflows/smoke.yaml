@@ -196,13 +196,14 @@ jobs:
       - name: Collect compact cluster diagnostics
         if: failure()
         run: |
+          # A Pending pod has no Ready condition at all, so "not Ready" means "no Ready=True condition".
           NOT_READY='.items[]
             | select(.status.phase != "Succeeded")
-            | select(any(.status.conditions[]?; .type == "Ready" and .status != "True"))'
+            | select((.status.conditions // []) | any(.type == "Ready" and .status == "True") | not)'
           {
             echo "not-Ready pods:"
             kubectl get pods -o json | jq -r "$NOT_READY
-              | \"  \(.metadata.name) \(.status.phase) \" + ([.status.containerStatuses[]? | (.state.waiting.reason // .state.terminated.reason // \"running\")] | join(\",\"))" | head -8
+              | \"  \(.metadata.name) \(.status.phase) \" + ([.status.containerStatuses[]? | (.state.waiting.reason // .state.terminated.reason // \"running\")] | join(\",\")) + ([.status.conditions[]? | select(.type == \"PodScheduled\" and .status == \"False\") | \" \(.reason): \(.message[0:110])\"] | join(\"\"))" | head -8
             for app in files converter docservice; do
               echo "errors in $app logs (last 2):"
               kubectl logs "deploy/$app" --tail=300 2>&1 | grep -iE 'error|exception' | tail -2 | cut -c1-220 | sed 's/^/  /'
@@ -254,7 +255,7 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::Logs of Not Ready Pods"
-          for pod in $(kubectl get pods -o json | jq -r '.items[] | select(.status.phase != "Succeeded") | select(any(.status.conditions[]?; .type == "Ready" and .status != "True")) | .metadata.name'); do
+          for pod in $(kubectl get pods -o json | jq -r '.items[] | select(.status.phase != "Succeeded") | select((.status.conditions // []) | any(.type == "Ready" and .status == "True") | not) | .metadata.name'); do
             echo "--- $pod ---"
             kubectl describe pod "$pod" | tail -30
             kubectl logs "$pod" --all-containers --tail=100 || true

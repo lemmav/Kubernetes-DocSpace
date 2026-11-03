@@ -112,8 +112,13 @@ def read_diagnostics(path):
 def build_report(xml_path, diagnostics_path, run_id):
     """Report lines; a single line when everything passed."""
     if not os.path.isfile(xml_path):
-        return [f"[FAIL] smoke: no {os.path.basename(xml_path)}, the job failed before the tests ran"
-                + (f" (run {run_id})" if run_id else "")]
+        lines = [f"[FAIL] smoke: no {os.path.basename(xml_path)}, the job failed before the tests ran"
+                 + (f" (run {run_id})" if run_id else "")]
+        diagnostics = read_diagnostics(diagnostics_path)[:DIAGNOSTICS_LINES]
+        if diagnostics:
+            lines.append("cluster diagnostics:")
+            lines.extend(f"  {line}" for line in diagnostics)
+        return lines[:MAX_LINES]
     counters, failed = read_results(xml_path)
     lines = [headline(counters, run_id)]
     if not failed:
