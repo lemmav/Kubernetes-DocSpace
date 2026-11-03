@@ -1,11 +1,7 @@
 """The portal is reachable through the router and routes requests correctly."""
-import pytest
-
 from support import endpoints
 from support.client import preview
 from support.constants import HTML_MARKER, HTTP_NOT_FOUND, HTTP_OK
-
-pytestmark = pytest.mark.portal
 
 
 def test_root_page_is_served(portal):

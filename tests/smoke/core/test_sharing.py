@@ -1,12 +1,8 @@
 """Sharing: files opened by an external link."""
-import pytest
-
 from support import endpoints
 from support.client import body_of, preview
 from support.constants import HTTP_NO_ACCESS, HTTP_OK, REQUEST_TOKEN_HEADER, Access, Field, Title
 from support.files import create_share_key, unique_content, upload_file
-
-pytestmark = pytest.mark.portal
 
 
 def test_external_link_opens_the_file_only_with_its_key(admin, portal):

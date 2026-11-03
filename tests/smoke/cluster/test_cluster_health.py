@@ -1,9 +1,5 @@
 """Kubernetes-level health: every pod is up and stable."""
-import pytest
-
 from support.cluster import is_ready, restart_count, running_pods
-
-pytestmark = pytest.mark.cluster
 
 
 def test_all_pods_are_ready(pods):

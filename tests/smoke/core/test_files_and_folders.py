@@ -1,13 +1,9 @@
 """Folders and files in My Documents: creation, a storage round-trip and versions."""
-import pytest
-
 from support.constants import Field, Title
 from support.files import (
     create_folder, download_file, download_version, file_versions, my_folder_id,
     unique_content, update_file, upload_file,
 )
-
-pytestmark = pytest.mark.portal
 
 
 def test_my_documents_folder_is_available(admin):

@@ -9,11 +9,7 @@ from support.readiness import wait_until_ready
 
 
 def pytest_collection_modifyitems(items):
-    """Run the disruptive tests last; put the first docstring line of every test into the JUnit XML.
-
-    The run summary shows the docstring as the test name.
-    """
-    items.sort(key=lambda item: item.get_closest_marker("disruptive") is not None)
+    """Put the first docstring line of every test into the JUnit XML, the run summary shows it as the test name."""
     for item in items:
         lines = (item.function.__doc__ or "").strip().splitlines()
         if lines:

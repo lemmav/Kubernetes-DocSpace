@@ -5,8 +5,6 @@ from support.client import relative_url
 from support.constants import EDITOR_API_MARKER, HTTP_OK, RTF_CONTENT, DocumentType, Field, Signature, Title
 from support.files import convert, create_document, download_file, open_editor_config, upload_file
 
-pytestmark = [pytest.mark.portal, pytest.mark.docs]
-
 
 def test_empty_document_can_be_created(admin):
     """Document Server builds an empty document from a template."""

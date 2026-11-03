@@ -6,8 +6,6 @@ from support.client import body_of, preview
 from support.config import EXPECTED_VERSION
 from support.constants import HTTP_OK, Field
 
-pytestmark = pytest.mark.portal
-
 
 def test_capabilities_endpoint_returns_json_object(portal):
     """The capabilities endpoint returns a JSON object."""

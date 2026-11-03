@@ -1,14 +1,10 @@
 """Data written before the DocSpace services restart is still there afterwards."""
-import pytest
-
 from support.auth import owner_token
 from support.cluster import RESTARTED_DEPLOYMENTS, restart_deployments
 from support.config import NAMESPACE, PORTAL_READY_INTERVAL, PORTAL_READY_TIMEOUT
 from support.constants import Field, RoomType, Title
 from support.files import create_room, download_file, folder_title, unique_content, upload_file
 from support.readiness import wait_until_ready
-
-pytestmark = [pytest.mark.portal, pytest.mark.cluster, pytest.mark.disruptive]
 
 
 def test_room_and_file_survive_a_restart_of_the_services(admin, portal, settings):

@@ -5,12 +5,16 @@ The `Smoke install` workflow (`.github/workflows/smoke.yaml`) installs the chart
 
 ## Layout
 
-| Path | What it holds |
-|---|---|
-| `test_*.py` | Tests grouped by topic: portal availability, public API, authentication, files, rooms, sharing, OAuth, Document Server, cluster health, persistence |
-| `conftest.py` | Fixtures: `portal` (anonymous, per test), `settings`, `wizard_completed`, `admin` (owner session), `pods` |
-| `support/` | Helpers: `config` (environment), `endpoints` (API paths), `constants` (titles, codes, JSON keys), `client` (`Portal`), `auth`, `files`, `oauth`, `cluster`, `readiness` |
-| `pytest.ini` | Markers `portal`, `cluster`, `docs`, `disruptive` |
+| Path | What it holds | Needs |
+|---|---|---|
+| `core/` | Portal availability, public API, authentication, files, rooms, sharing, OAuth | nothing special, fits any configuration |
+| `docs/` | Document Server: document creation, conversion, editor config | Docs in the install |
+| `cluster/` | Pod health and data persistence after a restart of the services | `kubectl` access to the cluster |
+| `values/` | Helm values of an install, one file per configuration (`minimal.yaml`) | |
+| `conftest.py` | Fixtures: `portal` (anonymous, per test), `settings`, `wizard_completed`, `admin` (owner session), `pods` | |
+| `support/` | Helpers: `config` (environment), `endpoints` (API paths), `constants` (titles, codes, JSON keys), `client` (`Portal`), `auth`, `files`, `oauth`, `cluster`, `readiness` | |
+
+A configuration is a values file plus the folders that fit it. There are no markers: to skip what a configuration lacks, leave its folder out of the command.
 
 The first test that needs the owner runs the first-run wizard once (`wizard_completed`); on a portal that is already set up the wizard is skipped
 and the owner from `PORTAL_EMAIL` and `PORTAL_PASSWORD` is used.
@@ -25,13 +29,13 @@ BASE_URL=http://localhost:8092 LICENSE_FILE=/path/to/license.lic pytest tests/sm
 Useful selections:
 
 ```bash
-pytest tests/smoke/test_files_and_folders.py     # one file
-pytest tests/smoke -k conversion                 # by name
-pytest tests/smoke -m "not cluster"              # without kubectl
-pytest tests/smoke -m "not disruptive"           # without restarting the services
+pytest tests/smoke/core tests/smoke/docs tests/smoke/cluster   # everything, in the order CI uses
+pytest tests/smoke/core                                        # without Docs and without kubectl
+pytest tests/smoke/core/test_files_and_folders.py              # one file
+pytest tests/smoke -k conversion                               # by name
 ```
 
-The `cluster` tests and the persistence test call `kubectl`, so they need access to the cluster DocSpace runs in.
+Keep `cluster` last: its persistence test restarts the DocSpace services. The tests in `cluster/` call `kubectl`, so they need access to the cluster DocSpace runs in.
 
 ## Environment
 
@@ -61,4 +65,8 @@ This needs the GitHub CLI `gh`.
 1. Put API paths into `support/endpoints.py` and titles, codes and JSON keys into `support/constants.py`, so the test body has no literals.
 2. Put repeated scenarios into `support/` and keep the test itself to the steps and the assertion.
 3. Give the test a one-line docstring: the run summary shows it as the test name.
-4. Mark a test that restarts services with `disruptive`, it then runs last.
+4. Put the test into the folder that matches what it needs: `core/` when it works with any configuration, `docs/` when it needs Document Server, `cluster/` when it needs `kubectl`. A new need gets a new folder.
+
+## Adding a configuration
+
+Put the Helm values into `values/<name>.yaml`, install with `-f tests/smoke/values/<name>.yaml` and run the folders that fit it. `values/minimal.yaml` is what the workflow installs now.

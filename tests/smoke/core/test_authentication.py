@@ -1,13 +1,9 @@
 """First-run wizard and owner authentication."""
-import pytest
-
 from support import endpoints
 from support.auth import login
 from support.client import body_of, preview
 from support.config import PORTAL_EMAIL, WRONG_PASSWORD
 from support.constants import HTTP_OK, HTTP_REJECTED, Field
-
-pytestmark = pytest.mark.portal
 
 
 def test_wizard_creates_the_portal_owner(wizard_completed, portal):

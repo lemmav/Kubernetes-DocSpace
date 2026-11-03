@@ -1,11 +1,7 @@
 """OAuth clients of the identity service."""
-import pytest
-
 from support import endpoints
 from support.constants import HTTP_DELETED, HTTP_OK, Scope
 from support.oauth import delete_client, identity_headers, register_client, scope_names
-
-pytestmark = pytest.mark.portal
 
 
 def test_oauth_client_lifecycle(admin, portal):

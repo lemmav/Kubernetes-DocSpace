@@ -182,7 +182,8 @@ jobs:
           EXPECTED_VERSION=$(grep '^appVersion:' Chart.yaml | tr -d '"' | awk '{print $2}')
           export EXPECTED_VERSION
           echo "Expected portal version: $EXPECTED_VERSION"
-          pytest tests/smoke --junitxml=smoke-report.xml
+          # The order matters: the cluster folder goes last, its persistence test restarts services.
+          pytest tests/smoke/core tests/smoke/docs tests/smoke/cluster --junitxml=smoke-report.xml
 
       - name: Collect compact cluster diagnostics
         if: failure()
