@@ -150,16 +150,7 @@ jobs:
         run: |
           helm install docspace . \
             -f ci-values.yaml \
-            --set replicas=1 \
-            --set docs.converter.replicas=1 \
-            --set docs.docservice.replicas=1 \
-            --set docs.persistence.size=1Gi \
-            --set docs.persistence.buffer.size=1Gi \
-            --set docs.persistence.runtimeConfig.size=256Mi \
-            --set opensearch.enabled=false \
-            --set persistence.storageClass=nfs \
-            --set persistence.docspaceData.size=1Gi \
-            --set persistence.routerLog.size=256Mi \
+            -f tests/smoke/values/minimal.yaml \
             --wait \
             --timeout 20m
 
