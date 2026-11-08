@@ -2,6 +2,11 @@ name: DocSpace smoke install
 
 on:
   workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: Branch or tag of ONLYOFFICE/Kubernetes-DocSpace to test, the chart of this repository when empty
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -15,6 +20,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # The tests, values and scripts always come from this repository. The chart comes from here too,
+      # unless upstream_ref is set: then it is fetched from the original repository at that branch or tag.
+      - name: Get chart
+        env:
+          UPSTREAM_URL: https://github.com/ONLYOFFICE/Kubernetes-DocSpace.git
+          UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        run: |
+          if [ -z "$UPSTREAM_REF" ]; then
+            echo "CHART_DIR=." >> "$GITHUB_ENV"
+            exit 0
+          fi
+          git init -q chart-src
+          git -C chart-src fetch -q --depth 1 "$UPSTREAM_URL" "$UPSTREAM_REF"
+          git -C chart-src checkout -q FETCH_HEAD
+          echo "CHART_DIR=chart-src" >> "$GITHUB_ENV"
+          echo "Chart: $UPSTREAM_URL $UPSTREAM_REF at $(git -C chart-src rev-parse --short HEAD)"
+
       - name: Setup Helm
         uses: azure/setup-helm@v5
         with:
@@ -23,17 +45,17 @@ jobs:
       - name: Build chart dependencies
         run: |
           helm repo add onlyoffice https://download.onlyoffice.com/charts/stable
-          helm dependency build .
+          helm dependency build "$CHART_DIR"
 
       # The chart reads the other passwords from the secrets of MySQL, Redis and RabbitMQ in the cluster,
       # so offline rendering needs only the broker password.
       - name: Helm lint
-        run: helm lint . --strict --set connections.brokerPassword=ci
+        run: helm lint "$CHART_DIR" --strict --set connections.brokerPassword=ci
 
       - name: Helm template
         run: |
-          helm template docspace . --set connections.brokerPassword=ci > /dev/null
-          helm template docspace . --set connections.brokerPassword=ci --set docs.enabled=false > /dev/null
+          helm template docspace "$CHART_DIR" --set connections.brokerPassword=ci > /dev/null
+          helm template docspace "$CHART_DIR" --set connections.brokerPassword=ci --set docs.enabled=false > /dev/null
 
   install:
     needs: lint
@@ -43,6 +65,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # The tests, values and scripts always come from this repository. The chart comes from here too,
+      # unless upstream_ref is set: then it is fetched from the original repository at that branch or tag.
+      - name: Get chart
+        env:
+          UPSTREAM_URL: https://github.com/ONLYOFFICE/Kubernetes-DocSpace.git
+          UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        run: |
+          if [ -z "$UPSTREAM_REF" ]; then
+            echo "CHART_DIR=." >> "$GITHUB_ENV"
+            exit 0
+          fi
+          git init -q chart-src
+          git -C chart-src fetch -q --depth 1 "$UPSTREAM_URL" "$UPSTREAM_REF"
+          git -C chart-src checkout -q FETCH_HEAD
+          echo "CHART_DIR=chart-src" >> "$GITHUB_ENV"
+          echo "Chart: $UPSTREAM_URL $UPSTREAM_REF at $(git -C chart-src rev-parse --short HEAD)"
 
       - name: Setup Helm
         uses: azure/setup-helm@v5
@@ -128,7 +167,7 @@ jobs:
 
       - name: Build DocSpace chart dependencies
         run: |
-          helm dependency build .
+          helm dependency build "$CHART_DIR"
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -144,11 +183,11 @@ jobs:
       - name: Lower CPU requests
         run: |
           pip install pyyaml
-          python .github/scripts/ci_values.py values.yaml > ci-values.yaml
+          python .github/scripts/ci_values.py "$CHART_DIR/values.yaml" > ci-values.yaml
 
       - name: Install DocSpace
         run: |
-          helm install docspace . \
+          helm install docspace "$CHART_DIR" \
             -f ci-values.yaml \
             -f tests/smoke/values/minimal.yaml \
             --wait \
@@ -179,7 +218,7 @@ jobs:
         env:
           BASE_URL: http://localhost:8092
         run: |
-          EXPECTED_VERSION=$(grep '^appVersion:' Chart.yaml | tr -d '"' | awk '{print $2}')
+          EXPECTED_VERSION=$(grep '^appVersion:' "$CHART_DIR/Chart.yaml" | tr -d '"' | awk '{print $2}')
           export EXPECTED_VERSION
           echo "Expected portal version: $EXPECTED_VERSION"
           # The order matters: the cluster folder goes last, its persistence test restarts services.
