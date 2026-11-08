@@ -191,7 +191,7 @@ jobs:
             -f ci-values.yaml \
             -f tests/smoke/values/minimal.yaml \
             --wait \
-            --timeout 20m
+            --timeout 10m
 
       - name: Port-forward router
         run: |
