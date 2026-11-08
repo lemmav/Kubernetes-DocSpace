@@ -99,14 +99,14 @@ jobs:
           kubectl cluster-info
           kubectl get nodes -o wide
 
-      - name: Add Helm repositories
+      - name: "Deps: Add Helm repositories"
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
           helm repo add nfs-server-provisioner https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner
           helm repo add onlyoffice https://download.onlyoffice.com/charts/stable
           helm repo update
 
-      - name: Install NFS provisioner
+      - name: "Deps: Install NFS provisioner"
         run: |
           helm upgrade --install nfs-server \
             nfs-server-provisioner/nfs-server-provisioner \
@@ -115,7 +115,7 @@ jobs:
             --wait \
             --timeout 5m
 
-      - name: Install MySQL
+      - name: "Deps: Install MySQL"
         run: |
           helm install mysql \
             -f sources/mysql_values.yaml \
@@ -136,7 +136,7 @@ jobs:
             --wait \
             --timeout 10m
 
-      - name: Install Redis
+      - name: "Deps: Install Redis"
         run: |
           helm install redis \
             --version 22.0.7 \
@@ -151,7 +151,7 @@ jobs:
             --wait \
             --timeout 10m
 
-      - name: Install RabbitMQ
+      - name: "Deps: Install RabbitMQ"
         run: |
           helm install rabbitmq \
             --version 16.0.14 \
@@ -165,7 +165,7 @@ jobs:
             --wait \
             --timeout 10m
 
-      - name: Build DocSpace chart dependencies
+      - name: "Deps: Build DocSpace chart dependencies"
         run: |
           helm dependency build "$CHART_DIR"
 
