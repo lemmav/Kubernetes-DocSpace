@@ -7,6 +7,14 @@ on:
         description: Branch or tag of ONLYOFFICE/Kubernetes-DocSpace to test, the chart of this repository when empty
         required: false
         default: ""
+      image_prefix:
+        description: Repository prefix of the DocSpace images, for example 4testing, the public images when empty
+        required: false
+        default: ""
+      image_tag:
+        description: Tag of the DocSpace images, for example 4.1.0.100, the tag of the chart when empty
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -185,11 +193,35 @@ jobs:
           pip install pyyaml
           python .github/scripts/ci_values.py "$CHART_DIR/values.yaml" > ci-values.yaml
 
-      - name: Install DocSpace
+      # Images of a test build (4testing) are private, the pods pull them with this secret.
+      - name: Docker Hub pull secret
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
+          if [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "Docker Hub secrets are not set, the images are pulled anonymously"
+            exit 0
+          fi
+          kubectl create secret docker-registry dockerhub \
+            --docker-server=https://index.docker.io/v1/ \
+            --docker-username="$DOCKERHUB_USERNAME" \
+            --docker-password="$DOCKERHUB_TOKEN"
+          echo "PULL_SECRET=dockerhub" >> "$GITHUB_ENV"
+
+      - name: Install DocSpace
+        env:
+          IMAGE_PREFIX: ${{ inputs.image_prefix }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          overrides=()
+          [ -n "$IMAGE_PREFIX" ] && overrides+=(--set "images.repoPrefix=$IMAGE_PREFIX")
+          [ -n "$IMAGE_TAG" ] && overrides+=(--set "images.tag=$IMAGE_TAG")
+          [ -n "${PULL_SECRET:-}" ] && overrides+=(--set "imagePullSecrets=$PULL_SECRET")
           helm install docspace "$CHART_DIR" \
             -f ci-values.yaml \
             -f tests/smoke/values/minimal.yaml \
+            "${overrides[@]}" \
             --wait \
             --timeout 10m
 
@@ -217,8 +249,12 @@ jobs:
       - name: Run smoke tests
         env:
           BASE_URL: http://localhost:8092
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           EXPECTED_VERSION=$(grep '^appVersion:' "$CHART_DIR/Chart.yaml" | tr -d '"' | awk '{print $2}')
+          # Images of another build report their own version: major.minor.patch of the image tag.
+          TAG_VERSION=$(echo "$IMAGE_TAG" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || true)
+          [ -n "$TAG_VERSION" ] && EXPECTED_VERSION=$TAG_VERSION
           export EXPECTED_VERSION
           echo "Expected portal version: $EXPECTED_VERSION"
           # The order matters: the cluster folder goes last, its persistence test restarts services.
