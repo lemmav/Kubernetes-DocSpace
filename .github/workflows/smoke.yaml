@@ -15,6 +15,10 @@ on:
         description: Tag of the DocSpace images, for example 4.1.0.100, the tag of the chart when empty
         required: false
         default: ""
+      disable_mcp:
+        description: Install without the AI MCP service (values/no-mcp.yaml)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -213,8 +217,10 @@ jobs:
         env:
           IMAGE_PREFIX: ${{ inputs.image_prefix }}
           IMAGE_TAG: ${{ inputs.image_tag }}
+          DISABLE_MCP: ${{ inputs.disable_mcp }}
         run: |
           overrides=()
+          [ "$DISABLE_MCP" = "true" ] && overrides+=(-f tests/smoke/values/no-mcp.yaml)
           [ -n "$IMAGE_PREFIX" ] && overrides+=(--set "images.repoPrefix=$IMAGE_PREFIX")
           [ -n "$IMAGE_TAG" ] && overrides+=(--set "images.tag=$IMAGE_TAG")
           [ -n "${PULL_SECRET:-}" ] && overrides+=(--set "imagePullSecrets=$PULL_SECRET")
